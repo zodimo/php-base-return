@@ -1,6 +1,6 @@
 {
-  "name": "zodimo/return",
-  "description": "A basic type that communicates the possibility of failure.",
+  "name": "zodimo/base-return",
+  "description": "Basic types that communicates the possibility of failure and optional values.",
   "type": "library",
   "license": "mit",
   "version": "0.1.0",

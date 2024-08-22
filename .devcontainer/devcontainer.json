@@ -1,5 +1,5 @@
 {
-  "name": "php-return",
+  "name": "php-base-return",
   "dockerComposeFile": ["docker-compose.yml"],
   "workspaceFolder": "/workspace",
   "service": "app",
