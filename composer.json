@@ -1,0 +1,45 @@
+{
+  "name": "zodimo/return",
+  "description": "A basic type that communicates the possibility of failure.",
+  "type": "library",
+  "license": "mit",
+  "version": "0.1.0",
+  "autoload": {
+    "psr-4": {
+      "Zodimo\\BaseReturn\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Zodimo\\BaseReturn\\Tests\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Jaco Labuschagne",
+      "email": "zodimo@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "~7.4|8"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.6",
+    "phpstan/phpstan": "^1.11",
+    "friendsofphp/php-cs-fixer": "^3.62"
+  },
+  "scripts": {
+    "test": [
+      "Composer\\Config::disableProcessTimeout",
+      "php ./vendor/bin/phpunit"
+    ],
+    "cs-fix": [
+      "Composer\\Config::disableProcessTimeout",
+      "php ./vendor/bin/php-cs-fixer --allow-risky=yes fix "
+    ],
+    "stan": [
+      "Composer\\Config::disableProcessTimeout",
+      "php ./vendor/bin/phpstan analyse"
+    ]
+  }
+}

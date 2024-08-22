@@ -1,0 +1,39 @@
+{
+  "name": "php-return",
+  "dockerComposeFile": ["docker-compose.yml"],
+  "workspaceFolder": "/workspace",
+  "service": "app",
+  "shutdownAction": "stopCompose",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "#terminal.integrated.shell.linux": "/bin/bash",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.insertSpaces": true,
+        "php.format.codeStyle": "Off",
+        "php.suggest.basic": false,
+        "php.completion.showParameters": true,
+        "php-cs-fixer.onsave": true,
+        "php-cs-fixer.executablePath": "/workspace/vendor/bin/php-cs-fixer",
+        "php-cs-fixer.allowRisky": true,
+        "phpstan.binPath": "/workspace/vendor/bin/phpstan",
+        "phpstan.singleFileMode": true,
+        "intelephense.environment.phpVersion": "7.4",
+        "[php]": {
+          "editor.defaultFormatter": "junstyle.php-cs-fixer"
+        },
+
+        "files.associations": {
+          "*.neon": "yaml"
+        }
+      },
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "esbenp.prettier-vscode",
+        "junstyle.php-cs-fixer",
+        "SanderRonde.phpstan-vscode"
+      ]
+    }
+  }
+}

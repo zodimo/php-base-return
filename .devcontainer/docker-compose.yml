@@ -1,0 +1,7 @@
+services:
+  app:
+    build: ./docker/app
+    volumes:
+      - ../:/workspace:cached
+    tty: true
+
