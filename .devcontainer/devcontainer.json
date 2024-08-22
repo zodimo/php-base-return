@@ -32,7 +32,8 @@
         "bmewburn.vscode-intelephense-client",
         "esbenp.prettier-vscode",
         "junstyle.php-cs-fixer",
-        "SanderRonde.phpstan-vscode"
+        "SanderRonde.phpstan-vscode",
+        "github.vscode-github-actions"
       ]
     }
   }
