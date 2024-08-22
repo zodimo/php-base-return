@@ -3,7 +3,6 @@
   "description": "Basic types that communicates the possibility of failure and optional values.",
   "type": "library",
   "license": "mit",
-  "version": "0.1.1",
   "autoload": {
     "psr-4": {
       "Zodimo\\BaseReturn\\": "src/"
