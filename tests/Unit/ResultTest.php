@@ -93,13 +93,13 @@ class ResultTest extends TestCase
     /**
      * unwrap.
      */
-    public function testSucceedUnwrap(): void
+    public function testSucceedUnwrapNotCallOnFailureCallback(): void
     {
         $result = Result::succeed(10);
         $this->assertEquals(10, $result->unwrap(fn ($_) => 'error'));
     }
 
-    public function testFailureUnwrap(): void
+    public function testFailureUnwrapCallsOnFailureCallback(): void
     {
         $result = Result::fail('error');
         $this->assertEquals('error', $result->unwrap(fn ($e) => $e));
