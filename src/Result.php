@@ -30,6 +30,8 @@ class Result
     }
 
     /**
+     * Succeed with this $value as success.
+     *
      * @param T $value
      *
      * @return Result<T, never>
@@ -40,9 +42,11 @@ class Result
     }
 
     /**
+     * Fail with this $value as failure.
+     *
      * @param E $value
      *
-     * @return Result<never, E>
+     * @return Result<mixed, E>
      */
     public static function fail($value): Result
     {
@@ -120,11 +124,11 @@ class Result
      *
      * @return Result<T,E>
      */
-    public function fromOption(Option $option, callable $onNone): Result
+    public static function fromOption(Option $option, callable $onNone): Result
     {
         return $option->match(
-            fn ($some) => $this->succeed($some),
-            fn () => $this->fail(call_user_func($onNone)),
+            fn ($some) => Result::succeed($some),
+            fn () => Result::fail(call_user_func($onNone)),
         );
     }
 

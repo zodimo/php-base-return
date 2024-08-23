@@ -14,25 +14,25 @@ use Zodimo\BaseReturn\Option;
  */
 class OptionTest extends TestCase
 {
-    public function testSome()
+    public function testSome(): void
     {
         $option = Option::some(10);
         $this->assertInstanceOf(Option::class, $option);
     }
 
-    public function testSomeUnwrap()
+    public function testSomeUnwrap(): void
     {
         $option = Option::some(10);
         $this->assertEquals(10, $option->unwrap(fn () => 'none'));
     }
 
-    public function testNone()
+    public function testNone(): void
     {
         $option = Option::none();
         $this->assertInstanceOf(Option::class, $option);
     }
 
-    public function testNoneUnwrap()
+    public function testNoneUnwrap(): void
     {
         $option = Option::none();
         $this->assertInstanceOf(Option::class, $option);
