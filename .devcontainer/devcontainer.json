@@ -19,7 +19,6 @@
         "php-cs-fixer.allowRisky": true,
         "phpstan.binPath": "/workspace/vendor/bin/phpstan",
         "phpstan.singleFileMode": true,
-        "intelephense.environment.phpVersion": "7.4",
         "[php]": {
           "editor.defaultFormatter": "junstyle.php-cs-fixer"
         },
@@ -29,11 +28,11 @@
         }
       },
       "extensions": [
-        "bmewburn.vscode-intelephense-client",
         "esbenp.prettier-vscode",
         "junstyle.php-cs-fixer",
         "SanderRonde.phpstan-vscode",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "DEVSENSE.phptools-vscode"
       ]
     }
   }

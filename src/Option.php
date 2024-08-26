@@ -50,6 +50,8 @@ class Option
 
     /**
      * @phpstan-assert-if-true Option<T> $this
+     *
+     * @phpstan-assert-if-false Option<void> $this
      */
     public function isSome(): bool
     {
@@ -58,6 +60,8 @@ class Option
 
     /**
      * @phpstan-assert-if-true Option<void> $this
+     *
+     * @phpstan-assert-if-false Option<T> $this
      */
     public function isNone(): bool
     {

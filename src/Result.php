@@ -55,6 +55,8 @@ class Result
 
     /**
      * @phpstan-assert-if-true Result<T, mixed> $this
+     *
+     * @phpstan-assert-if-false Result<mixed, E> $this
      */
     public function isSuccess(): bool
     {
@@ -63,6 +65,8 @@ class Result
 
     /**
      * @phpstan-assert-if-true Result<mixed, E> $this
+     *
+     * @phpstan-assert-if-false Result<T, mixed> $this
      */
     public function isFailure(): bool
     {
