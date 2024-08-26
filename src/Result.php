@@ -34,7 +34,7 @@ class Result
      *
      * @param T $value
      *
-     * @return Result<T, never>
+     * @return Result<T, mixed>
      */
     public static function succeed($value): Result
     {
@@ -53,25 +53,49 @@ class Result
         return new Result(self::failureTag, $value);
     }
 
+    /**
+     * @phpstan-assert-if-true Result<T, mixed> $this
+     */
     public function isSuccess(): bool
     {
         return self::successTag === $this->_tag;
     }
 
+    /**
+     * @phpstan-assert-if-true Result<mixed, E> $this
+     */
     public function isFailure(): bool
     {
         return self::failureTag === $this->_tag;
     }
 
     /**
-     * @param callable(E):mixed $onFailure
+     * Unwrap success value or call onFailure to return a default/alternative value.
      *
-     * @return mixed|T
+     * @param callable(E):T $defaultOnFailure
+     *
+     * @return T
      */
-    public function unwrap(callable $onFailure)
+    public function unwrap(callable $defaultOnFailure)
     {
         if ($this->isFailure()) {
-            return call_user_func($onFailure, $this->value);
+            return call_user_func($defaultOnFailure, $this->value);
+        }
+
+        return $this->value;
+    }
+
+    /**
+     * Unwrap failure value or call onSuccess to return a default/alternative value.
+     *
+     * @param callable(T):E $defaultOnSuccess
+     *
+     * @return E
+     */
+    public function unwrapFailure(callable $defaultOnSuccess)
+    {
+        if ($this->isSuccess()) {
+            return call_user_func($defaultOnSuccess, $this->value);
         }
 
         return $this->value;
@@ -133,17 +157,62 @@ class Result
     }
 
     /**
-     * @param callable(T):T $fn
+     * @template T2
      *
-     * @return Result<T,E>
+     * @param callable(T):T2 $fn
+     *
+     * @return Result<T2,E>
      */
     public function map(callable $fn): Result
     {
         if ($this->isSuccess()) {
-            return $this->succeed(call_user_func($fn, $this->value));
+            $clone = clone $this;
+            $clone->value = call_user_func($fn, $this->value);
+
+            return $clone;
         }
 
         return $this;
+    }
+
+    /**
+     * @template E2
+     *
+     * @param callable(E):E2 $fn
+     *
+     * @return Result<T, E2>
+     */
+    public function mapFailure(callable $fn): Result
+    {
+        if ($this->isFailure()) {
+            $clone = clone $this;
+            $clone->value = call_user_func($fn, $this->value);
+
+            return $clone;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @template T2
+     * @template E2
+     *
+     * @param callable(T):T2 $onSuccess
+     * @param callable(E):E2 $onFailure
+     *
+     * @return Result<T2, E2>
+     */
+    public function mapBoth(callable $onSuccess, callable $onFailure): Result
+    {
+        $clone = clone $this;
+        if ($this->isSuccess()) {
+            $clone->value = call_user_func($onSuccess, $this->value);
+        } else {
+            $clone->value = call_user_func($onFailure, $this->value);
+        }
+
+        return $clone;
     }
 
     /**
