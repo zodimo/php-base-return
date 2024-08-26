@@ -48,25 +48,33 @@ class Option
         return new self(self::noneTag, null);
     }
 
+    /**
+     * @phpstan-assert-if-true Option<T> $this
+     */
     public function isSome(): bool
     {
         return self::someTag == $this->_tag;
     }
 
+    /**
+     * @phpstan-assert-if-true Option<void> $this
+     */
     public function isNone(): bool
     {
         return self::noneTag == $this->_tag;
     }
 
     /**
-     * @param callable():mixed $onNone
+     * Unwrap Some value or call onNone to return a default/alternative value.
      *
-     * @return mixed|T
+     * @param callable():T $defaultOnNone
+     *
+     * @return T
      */
-    public function unwrap(callable $onNone)
+    public function unwrap(callable $defaultOnNone)
     {
         if ($this->isNone()) {
-            return call_user_func($onNone);
+            return call_user_func($defaultOnNone);
         }
 
         return $this->value;
@@ -99,10 +107,13 @@ class Option
     public function map(callable $fn): Option
     {
         if ($this->isSome()) {
-            return $this->some(call_user_func($fn, $this->value));
+            $clone = clone $this;
+            $clone->value = call_user_func($fn, $this->value);
+
+            return $clone;
         }
 
-        return $this->none();
+        return $this;
     }
 
     /**
@@ -118,6 +129,6 @@ class Option
             return call_user_func($fn, $this->value);
         }
 
-        return Option::none();
+        return $this;
     }
 }

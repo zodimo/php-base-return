@@ -59,7 +59,7 @@ class ResultTest extends TestCase
         $option = $result->success();
         $this->assertInstanceOf(Option::class, $option);
         $this->assertTrue($option->isSome());
-        $this->assertEquals(10, $option->unwrap(fn () => 'none'));
+        $this->assertEquals(10, $option->unwrap(fn () => 0));
     }
 
     public function testFailSuccessOptionNone(): void
@@ -88,6 +88,7 @@ class ResultTest extends TestCase
         $option = $result->failure();
         $this->assertInstanceOf(Option::class, $option);
         $this->assertTrue($option->isNone());
+        $this->assertEquals('none', $option->unwrap(fn () => 'none'));
     }
 
     /**
@@ -96,13 +97,28 @@ class ResultTest extends TestCase
     public function testSucceedUnwrapNotCallOnFailureCallback(): void
     {
         $result = Result::succeed(10);
-        $this->assertEquals(10, $result->unwrap(fn ($_) => 'error'));
+        $this->assertEquals(10, $result->unwrap(fn ($_) => 0));
     }
 
     public function testFailureUnwrapCallsOnFailureCallback(): void
     {
         $result = Result::fail('error');
-        $this->assertEquals('error', $result->unwrap(fn ($e) => $e));
+        $this->assertEquals(10, $result->unwrap(fn ($_) => 10));
+    }
+
+    /**
+     * unwrapFailure.
+     */
+    public function testFailureUnwrapFailureNotCallOnSuccessCallback(): void
+    {
+        $result = Result::fail(10);
+        $this->assertEquals(10, $result->unwrapFailure(fn ($_) => 0));
+    }
+
+    public function testFailureUnwrapFailurCallsOnSuccessCallback(): void
+    {
+        $result = Result::succeed('success');
+        $this->assertEquals(10, $result->unwrapFailure(fn ($_) => 10));
     }
 
     /**
@@ -112,7 +128,7 @@ class ResultTest extends TestCase
     {
         $result = Result::succeed(10)->match(
             fn ($value) => $value + 10,
-            fn ($_) => 'failure'
+            fn ($_) => 0
         );
         $this->assertEquals(20, $result);
     }
@@ -120,7 +136,7 @@ class ResultTest extends TestCase
     public function testMatchOnFailure(): void
     {
         $result = Result::fail(10)->match(
-            fn ($_) => 'success',
+            fn ($_) => 0,
             fn ($e) => $e + 10
         );
         $this->assertEquals(20, $result);
@@ -134,7 +150,7 @@ class ResultTest extends TestCase
         $option = Option::some(10);
         $result = Result::fromOption($option, fn () => 'none');
         $this->assertTrue($result->isSuccess());
-        $this->assertEquals(10, $result->unwrap(fn ($_) => 'failure'));
+        $this->assertEquals(10, $result->unwrap(fn ($_) => 0));
     }
 
     public function testFromOptionNoneIsFailure(): void
@@ -142,7 +158,7 @@ class ResultTest extends TestCase
         $option = Option::none();
         $result = Result::fromOption($option, fn () => 'none');
         $this->assertTrue($result->isFailure());
-        $this->assertEquals('none', $result->unwrap(fn ($error) => $error));
+        $this->assertEquals('none', $result->unwrapFailure(fn ($_) => 'success'));
     }
 
     /**
@@ -152,7 +168,7 @@ class ResultTest extends TestCase
     {
         $mapFn = fn (int $value) => $value + 10;
         $result = Result::succeed(11)->map($mapFn);
-        $this->assertEquals(21, $result->unwrap(fn ($_) => 'error'));
+        $this->assertEquals(21, $result->unwrap(fn ($_) => 0));
     }
 
     public function testMapOnFailure(): void
@@ -162,6 +178,42 @@ class ResultTest extends TestCase
         $this->assertTrue($result->isFailure());
         // unwrap and return the error for the test
         $this->assertEquals('fail', $result->unwrap(fn ($error) => $error));
+    }
+
+    /**
+     * mapFailure.
+     */
+    public function testMapFailureOnSuccess(): void
+    {
+        $mapFn = fn ($_) => 'error';
+        $result = Result::succeed(11)->mapFailure($mapFn);
+        $this->assertEquals(11, $result->unwrap(fn ($_) => 'error'));
+    }
+
+    public function testMapFailureOnFailure(): void
+    {
+        $mapFn = fn (int $e) => $e + 10;
+        $result = Result::fail(11)->mapFailure($mapFn);
+        $this->assertEquals(21, $result->unwrap(fn ($e) => $e));
+    }
+
+    /**
+     * mapBoth.
+     */
+    public function testMapBothOnSuccess(): void
+    {
+        $onSuccess = fn (int $n) => $n + 10;
+        $onFailure = fn ($_) => 'error';
+        $result = Result::succeed(11)->mapBoth($onSuccess, $onFailure);
+        $this->assertEquals(21, $result->unwrap(fn ($_) => 0));
+    }
+
+    public function testMapBothOnFailure(): void
+    {
+        $onSuccess = fn ($_) => 'success';
+        $onFailure = fn (int $n) => $n + 10;
+        $result = Result::fail(11)->mapBoth($onSuccess, $onFailure);
+        $this->assertEquals(21, $result->unwrapFailure(fn ($_) => 0));
     }
 
     /**
