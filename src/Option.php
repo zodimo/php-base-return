@@ -75,11 +75,11 @@ class Option
      */
     public function unwrap(callable $defaultOnNone)
     {
-        if ($this->isNone()) {
-            return call_user_func($defaultOnNone);
-        }
-
-        return $this->value;
+        return $this->match(
+            // identity
+            fn ($x) => $x,
+            $defaultOnNone
+        );
     }
 
     /**

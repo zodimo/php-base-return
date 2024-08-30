@@ -82,11 +82,11 @@ class Result
      */
     public function unwrap(callable $defaultOnFailure)
     {
-        if ($this->isFailure()) {
-            return call_user_func($defaultOnFailure, $this->value);
-        }
-
-        return $this->value;
+        return $this->match(
+            // identity
+            fn ($x) => $x,
+            $defaultOnFailure
+        );
     }
 
     /**
@@ -98,11 +98,11 @@ class Result
      */
     public function unwrapFailure(callable $defaultOnSuccess)
     {
-        if ($this->isSuccess()) {
-            return call_user_func($defaultOnSuccess, $this->value);
-        }
-
-        return $this->value;
+        return $this->match(
+            $defaultOnSuccess,
+            // identity
+            fn ($x) => $x,
+        );
     }
 
     /**
