@@ -91,12 +91,14 @@ class OptionTest extends TestCase
     public function testMapOnSome(): void
     {
         $result = Option::some(10)->map(fn (int $x) => $x + 10);
+        // @phpstan-ignore argument.type
         $this->assertEquals(20, $result->unwrap(fn () => 'none'));
     }
 
     public function testMapOnNone(): void
     {
         $result = Option::none()->map(fn (int $x) => $x + 10);
+        // @phpstan-ignore argument.type
         $this->assertEquals('none', $result->unwrap(fn () => 'none'));
     }
 
