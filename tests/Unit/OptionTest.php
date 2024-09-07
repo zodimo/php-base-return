@@ -6,6 +6,7 @@ namespace Zodimo\BaseReturn\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use Zodimo\BaseReturn\Option;
+use Zodimo\BaseReturn\Tests\MockClosureTrait;
 
 /**
  * @internal
@@ -14,16 +15,18 @@ use Zodimo\BaseReturn\Option;
  */
 class OptionTest extends TestCase
 {
+    use MockClosureTrait;
+
     /**
      * Constructors.
      */
-    public function testSome(): void
+    public function testCanCreateSome(): void
     {
         $option = Option::some(10);
         $this->assertInstanceOf(Option::class, $option);
     }
 
-    public function testNone(): void
+    public function testCanCreateNone(): void
     {
         $option = Option::none();
         $this->assertInstanceOf(Option::class, $option);
@@ -52,16 +55,20 @@ class OptionTest extends TestCase
     /**
      * unwrap.
      */
-    public function testSomeUnwrapNotCallOnNoneCallback(): void
+    public function testUnwrapOnSome(): void
     {
         $option = Option::some(10);
-        $this->assertEquals(10, $option->unwrap(fn () => 'none'));
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->never())->method('__invoke');
+        $this->assertEquals(10, $option->unwrap($onNone));
     }
 
-    public function testNoneUnwrapCallsOnNoneCallback(): void
+    public function testUnwrapOnNone(): void
     {
         $option = Option::none();
-        $this->assertEquals('none', $option->unwrap(fn () => 'none'));
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->once())->method('__invoke')->willReturn('none');
+        $this->assertEquals('none', $option->unwrap($onNone));
     }
 
     /**
@@ -69,17 +76,22 @@ class OptionTest extends TestCase
      */
     public function testMatchOnSome(): void
     {
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->never())->method('__invoke');
+
         $result = Option::some(10)->match(
             fn (int $n) => $n + 10,
-            fn () => 'none'
+            $onNone
         );
         $this->assertEquals(20, $result);
     }
 
     public function testMatchOnNone(): void
     {
+        $onSome = $this->createClosureMock();
+        $onSome->expects($this->never())->method('__invoke');
         $result = Option::none()->match(
-            fn ($_) => 'some',
+            $onSome,
             fn () => 'none'
         );
         $this->assertEquals('none', $result);
@@ -91,15 +103,20 @@ class OptionTest extends TestCase
     public function testMapOnSome(): void
     {
         $result = Option::some(10)->map(fn (int $x) => $x + 10);
-        // @phpstan-ignore argument.type
-        $this->assertEquals(20, $result->unwrap(fn () => 'none'));
+
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->never())->method('__invoke');
+
+        $this->assertEquals(20, $result->unwrap($onNone));
     }
 
     public function testMapOnNone(): void
     {
         $result = Option::none()->map(fn (int $x) => $x + 10);
-        // @phpstan-ignore argument.type
-        $this->assertEquals('none', $result->unwrap(fn () => 'none'));
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->once())->method('__invoke')->willReturn('none');
+
+        $this->assertEquals('none', $result->unwrap($onNone));
     }
 
     /**
@@ -107,19 +124,35 @@ class OptionTest extends TestCase
      */
     public function testFlatmapOnSomeWithSome(): void
     {
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->never())->method('__invoke');
+
         $result = Option::some(10)->flatMap(fn (int $x) => Option::some($x + 10));
-        $this->assertEquals(20, $result->unwrap(fn () => 'none'));
+
+        $this->assertEquals(20, $result->unwrap($onNone));
     }
 
     public function testFlatmapOnSomeWithNone(): void
     {
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->once())->method('__invoke')->willReturn('none');
+
         $result = Option::some(10)->flatMap(fn ($_) => Option::none());
-        $this->assertEquals('none', $result->unwrap(fn () => 'none'));
+        $this->assertEquals('none', $result->unwrap($onNone));
     }
 
     public function testFlatmapOnNone(): void
     {
-        $result = Option::none()->flatMap(fn ($_) => Option::some('some'));
-        $this->assertEquals('none', $result->unwrap(fn () => 'none'));
+        $func = $this->createClosureMock();
+        $func->expects($this->never())->method('__invoke');
+
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->once())->method('__invoke')->willReturn('none');
+
+        /**
+         * @var callable(mixed):Option<mixed> $func
+         */
+        $result = Option::none()->flatMap($func);
+        $this->assertEquals('none', $result->unwrap($onNone));
     }
 }
