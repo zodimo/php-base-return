@@ -79,6 +79,7 @@ class Either
 
     /**
      * Unwrap Left value or call defaultOnRight to return a default/alternative value.
+     * Alias for Match with identity on Left.
      *
      * @param callable(RIGHT):LEFT $defaultOnRight
      *
@@ -95,6 +96,7 @@ class Either
 
     /**
      * Unwrap Right value or call defaultOnLeft to return a default/alternative value.
+     * Alias for Match with identity on Right.
      *
      * @param callable(LEFT):RIGHT $defaultOnLeft
      *
@@ -107,6 +109,38 @@ class Either
             // identity
             fn ($x) => $x,
         );
+    }
+
+    /**
+     * @template RETURN
+     *
+     * @param callable(LEFT):RETURN $onLeft
+     *
+     * @return Option<RETURN>
+     */
+    public function matchLeft(callable $onLeft): Option
+    {
+        if ($this->isLeft()) {
+            return Option::some(call_user_func($onLeft, $this->value));
+        }
+
+        return Option::none();
+    }
+
+    /**
+     * @template RETURN
+     *
+     * @param callable(RIGHT):RETURN $onRight
+     *
+     * @return Option<RETURN>
+     */
+    public function matchRight(callable $onRight): Option
+    {
+        if ($this->isRight()) {
+            return Option::some(call_user_func($onRight, $this->value));
+        }
+
+        return Option::none();
     }
 
     /**
@@ -191,9 +225,9 @@ class Either
      * @template R
      * @template L
      *
-     * @param callable(RIGHT):Either<L|LEFT, R> $fn
+     * @param callable(RIGHT):Either<L, R> $fn
      *
-     * @return Either<L|LEFT, R>
+     * @return Either<L, R>|Either<LEFT, R>
      */
     public function flatMap(callable $fn): Either
     {
