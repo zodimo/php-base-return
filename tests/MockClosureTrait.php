@@ -19,4 +19,15 @@ trait MockClosureTrait
             ->getMock()
         ;
     }
+
+     /**
+     * @return callable&MockObject $mockClosure
+     */
+    public function createClosureNotCalled()
+    {
+        $closure = $this->createClosureMock();
+        $closure->expects($this->never())->method('__invoke');
+
+        return $closure;
+    }
 }

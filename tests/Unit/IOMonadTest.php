@@ -32,10 +32,8 @@ class IOMonadTest extends TestCase
 
     public function testPureValue(): void
     {
-        $onFailure = $this->createClosureMock();
-        $onFailure->expects($this->never())->method('__invoke');
         $m = IOMonad::pure(10);
-        $result = $m->unwrapSuccess($onFailure);
+        $result = $m->unwrapSuccess($this->createClosureNotCalled());
         $this->assertEquals(10, $result);
     }
 
@@ -48,68 +46,50 @@ class IOMonadTest extends TestCase
 
     public function testFailIsValue(): void
     {
-        $onSuccess = $this->createClosureMock();
-        $onSuccess->expects($this->never())->method('__invoke');
-
         $m = IOMonad::fail(10);
 
-        $result = $m->unwrapFailure($onSuccess);
+        $result = $m->unwrapFailure($this->createClosureNotCalled());
         $this->assertEquals(10, $result);
     }
 
     public function testFmapOnSuccess(): void
     {
-        $onFailure = $this->createClosureMock();
-        $onFailure->expects($this->never())->method('__invoke');
-
         $m = IOMonad::pure(10);
         $result = $m->fmap(fn ($x) => $x + 10);
         $this->assertTrue($result->isSuccess());
-        $this->assertEquals(20, $result->unwrapSuccess($onFailure));
+        $this->assertEquals(20, $result->unwrapSuccess($this->createClosureNotCalled()));
     }
 
     public function testFmapOnFailure(): void
     {
-        $onSuccess = $this->createClosureMock();
-        $onSuccess->expects($this->never())->method('__invoke');
-
         $m = IOMonad::fail(10);
         $result = $m->fmap(fn ($x) => $x + 10);
         $this->assertTrue($result->isFailure());
-        $this->assertEquals(10, $result->unwrapFailure($onSuccess));
+        $this->assertEquals(10, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     public function testFlatmapOnSuccess(): void
     {
-        $onFailure = $this->createClosureMock();
-        $onFailure->expects($this->never())->method('__invoke');
-
         $m = IOMonad::pure(10);
-        $result = $m->flatmap(fn ($x) => IOMonad::pure($x + 10));
+        $result = $m->flatMap(fn ($x) => IOMonad::pure($x + 10));
         $this->assertTrue($result->isSuccess());
-        $this->assertEquals(20, $result->unwrapSuccess($onFailure));
+        $this->assertEquals(20, $result->unwrapSuccess($this->createClosureNotCalled()));
     }
 
     public function testFlatmapOnFailure(): void
     {
-        $onSuccess = $this->createClosureMock();
-        $onSuccess->expects($this->never())->method('__invoke');
-
         $m = IOMonad::fail(10);
-        $result = $m->flatmap(fn ($x) => IOMonad::pure($x + 10));
+        $result = $m->flatMap(fn ($x) => IOMonad::pure($x + 10));
         $this->assertTrue($result->isFailure());
-        $this->assertEquals(10, $result->unwrapFailure($onSuccess));
+        $this->assertEquals(10, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     public function testFlatmapOnSuccessWithFailure(): void
     {
-        $onSuccess = $this->createClosureMock();
-        $onSuccess->expects($this->never())->method('__invoke');
-
         $m = IOMonad::pure(10);
-        $result = $m->flatmap(fn ($x) => IOMonad::fail(100));
+        $result = $m->flatMap(fn ($x) => IOMonad::fail(100));
         $this->assertTrue($result->isFailure());
-        $this->assertEquals(100, $result->unwrapFailure($onSuccess));
+        $this->assertEquals(100, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     public function testShouldNotComplareIOMonads(): void
@@ -117,5 +97,16 @@ class IOMonadTest extends TestCase
         $a = IOMonad::pure(10);
         $b = IOMonad::pure(11);
         $this->assertEquals($a, $b);
+    }
+
+    public function testStackSafeFlatMap(): void
+    {
+        $m = IOMonad::pure(0);
+        $f = fn (int $x) => IOMonad::pure($x + 1);
+
+        foreach (range(0, 4999) as $_) {
+            $m = $m->flatMap($f);
+        }
+        $this->assertEquals(5000, $m->unwrapSuccess($this->createClosureNotCalled()));
     }
 }

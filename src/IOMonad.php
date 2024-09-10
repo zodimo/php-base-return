@@ -39,7 +39,7 @@ class IOMonad
      *
      * @return IOMonad<_OUTPUTF, _ERRF>|IOMonad<VALUE, ERR>
      */
-    public function flatmap(callable $f): IOMonad
+    public function flatMap(callable $f): IOMonad
     {
         return new IOMonad(fn () => $this->eval()->match(
             fn ($value) => call_user_func($f, $value)->eval(),
