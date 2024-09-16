@@ -109,4 +109,23 @@ class IOMonadTest extends TestCase
         }
         $this->assertEquals(5000, $m->unwrapSuccess($this->createClosureNotCalled()));
     }
+
+    public function testTryWithSuccess(): void
+    {
+        $func = fn () => 10;
+        $m = IOMonad::try($func);
+
+        $this->assertEquals(10, $m->unwrapSuccess($this->createClosureNotCalled()));
+    }
+
+    public function testTryWithFailure(): void
+    {
+        $exception = new \RuntimeException('failed');
+        $func = function () use ($exception) {
+            throw $exception;
+        };
+        $m = IOMonad::try($func);
+
+        $this->assertSame($exception, $m->unwrapFailure($this->createClosureNotCalled()));
+    }
 }

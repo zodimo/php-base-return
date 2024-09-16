@@ -141,6 +141,22 @@ class IOMonad
     }
 
     /**
+     * @template _VALUE
+     *
+     * @param callable():_VALUE $f
+     *
+     * @return IOMonad<_VALUE, \Throwable>
+     */
+    public static function try(callable $f): IOMonad
+    {
+        try {
+            return IOMonad::pure(call_user_func($f));
+        } catch (\Throwable $e) {
+            return IOMonad::fail($e);
+        }
+    }
+
+    /**
      * @return Result<VALUE, ERR>
      */
     private function eval(): Result
