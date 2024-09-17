@@ -6,7 +6,7 @@ namespace Zodimo\BaseReturn\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use Zodimo\BaseReturn\Option;
-use Zodimo\BaseReturn\Tests\MockClosureTrait;
+use Zodimo\BaseReturnTest\MockClosureTrait;
 
 /**
  * @internal
