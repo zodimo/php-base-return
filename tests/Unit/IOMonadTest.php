@@ -92,11 +92,13 @@ class IOMonadTest extends TestCase
         $this->assertEquals(100, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
-    public function testShouldNotComplareIOMonads(): void
+    public function testCanComplareIOMonads(): void
     {
         $a = IOMonad::pure(10);
         $b = IOMonad::pure(11);
-        $this->assertEquals($a, $b);
+        $aa = IOMonad::pure(10);
+        $this->assertTrue($a !== $b);
+        $this->assertTrue($a == $aa);
     }
 
     public function testStackSafeFlatMap(): void

@@ -14,19 +14,16 @@ namespace Zodimo\BaseReturn;
 class IOMonad
 {
     /**
-     * @var callable():Result<VALUE, ERR>
+     * @var Result<VALUE, ERR>
      */
-    private $_thunk;
+    private Result $_result;
 
     /**
-     * @var ?Result<VALUE, ERR>
+     * @param Result<VALUE,ERR> $result
      */
-    private ?Result $evalResult;
-
-    private function __construct(callable $thunk)
+    private function __construct(Result $result)
     {
-        $this->_thunk = $thunk;
-        $this->evalResult = null;
+        $this->_result = $result;
     }
 
     /**
@@ -41,10 +38,10 @@ class IOMonad
      */
     public function flatMap(callable $f): IOMonad
     {
-        return new IOMonad(fn () => $this->eval()->match(
-            fn ($value) => call_user_func($f, $value)->eval(),
-            fn ($_) => $this->eval()
-        ));
+        return $this->_result->match(
+            fn ($value) => call_user_func($f, $value),
+            fn ($_) => $this
+        );
     }
 
     /**
@@ -58,7 +55,7 @@ class IOMonad
      */
     public function fmap(callable $f): IOMonad
     {
-        return new IOMonad(fn () => $this->eval()->map($f));
+        return new IOMonad($this->_result->map($f));
     }
 
     /**
@@ -72,7 +69,7 @@ class IOMonad
      */
     public static function pure($a): IOMonad
     {
-        return new self(fn () => Result::succeed($a));
+        return new self(Result::succeed($a));
     }
 
     /**
@@ -84,7 +81,7 @@ class IOMonad
      */
     public static function fail($e): IOMonad
     {
-        return new self(fn () => Result::fail($e));
+        return new self(Result::fail($e));
     }
 
     /**
@@ -92,12 +89,12 @@ class IOMonad
      */
     public function isSuccess(): bool
     {
-        return $this->eval()->isSuccess();
+        return $this->_result->isSuccess();
     }
 
     public function isFailure(): bool
     {
-        return $this->eval()->isFailure();
+        return $this->_result->isFailure();
     }
 
     /**
@@ -109,7 +106,7 @@ class IOMonad
      */
     public function unwrapSuccess(callable $onFailure)
     {
-        return $this->eval()->unwrap($onFailure);
+        return $this->_result->unwrap($onFailure);
     }
 
     /**
@@ -121,7 +118,7 @@ class IOMonad
      */
     public function unwrapFailure(callable $onSuccess)
     {
-        return $this->eval()->unwrapFailure($onSuccess);
+        return $this->_result->unwrapFailure($onSuccess);
     }
 
     /**
@@ -134,7 +131,7 @@ class IOMonad
      */
     public function match(callable $onSuccess, callable $onFailure)
     {
-        return $this->eval()->match(
+        return $this->_result->match(
             $onSuccess,
             $onFailure
         );
@@ -154,17 +151,5 @@ class IOMonad
         } catch (\Throwable $e) {
             return IOMonad::fail($e);
         }
-    }
-
-    /**
-     * @return Result<VALUE, ERR>
-     */
-    private function eval(): Result
-    {
-        if (is_null($this->evalResult)) {
-            $this->evalResult = call_user_func($this->_thunk);
-        }
-
-        return $this->evalResult;
     }
 }
