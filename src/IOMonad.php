@@ -34,10 +34,11 @@ class IOMonad
      *
      * @param callable(VALUE):IOMonad<_OUTPUTF, _ERRF> $f
      *
-     * @return IOMonad<_OUTPUTF, _ERRF>|IOMonad<VALUE, ERR>
+     * @return IOMonad<_OUTPUTF, _ERRF|ERR>
      */
     public function flatMap(callable $f): IOMonad
     {
+        // @phpstan-ignore return.type
         return $this->_result->match(
             fn ($value) => call_user_func($f, $value),
             fn ($_) => $this
