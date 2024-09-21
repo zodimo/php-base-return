@@ -36,7 +36,7 @@ class Either
      *
      * @param L $value
      *
-     * @return Either<L, mixed>
+     * @return Either<L,mixed>
      */
     public static function left($value): Either
     {
@@ -50,7 +50,7 @@ class Either
      *
      * @param R $value
      *
-     * @return Either<mixed, R>
+     * @return Either<mixed,R>
      */
     public static function right($value): Either
     {
@@ -58,9 +58,9 @@ class Either
     }
 
     /**
-     * @phpstan-assert-if-true Either<LEFT, mixed> $this
+     * @phpstan-assert-if-true Either<LEFT,never> $this
      *
-     * @phpstan-assert-if-false Either<mixed, RIGHT> $this
+     * @phpstan-assert-if-false Either<never,RIGHT> $this
      */
     public function isLeft(): bool
     {
@@ -68,9 +68,9 @@ class Either
     }
 
     /**
-     * @phpstan-assert-if-true Either<mixed, RIGHT> $this
+     * @phpstan-assert-if-true Either<never,RIGHT> $this
      *
-     * @phpstan-assert-if-false Either<LEFT, mixed> $this
+     * @phpstan-assert-if-false Either<LEFT,never> $this
      */
     public function isRight(): bool
     {
@@ -116,7 +116,7 @@ class Either
      *
      * @param callable(LEFT):RETURN $onLeft
      *
-     * @return Option<RETURN>
+     * @return Option<RETURN>|Option<void>
      */
     public function matchLeft(callable $onLeft): Option
     {
@@ -132,7 +132,7 @@ class Either
      *
      * @param callable(RIGHT):RETURN $onRight
      *
-     * @return Option<RETURN>
+     * @return Option<RETURN>|Option<void>
      */
     public function matchRight(callable $onRight): Option
     {
@@ -184,7 +184,7 @@ class Either
      *
      * @param callable(RIGHT):R $fn
      *
-     * @return Either<LEFT, R>
+     * @return Either<LEFT,R>
      */
     public function mapRight(callable $fn): Either
     {
@@ -205,7 +205,7 @@ class Either
      * @param callable(LEFT):L  $onLeft
      * @param callable(RIGHT):R $onRight
      *
-     * @return Either<L, R>
+     * @return Either<L,R>
      */
     public function mapBoth(callable $onLeft, callable $onRight): Either
     {
@@ -225,9 +225,9 @@ class Either
      * @template R
      * @template L
      *
-     * @param callable(RIGHT):Either<L, R> $fn
+     * @param callable(RIGHT):Either<L,R> $fn
      *
-     * @return Either<L, R>|Either<LEFT, R>
+     * @return Either<L,R>|Either<LEFT,R>
      */
     public function flatMap(callable $fn): Either
     {

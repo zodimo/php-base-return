@@ -2,6 +2,8 @@ parameters:
 	level: 8
 	paths:
 		- src
+		- tests
+	treatPhpDocTypesAsCertain: false
 
 
 	

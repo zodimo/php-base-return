@@ -39,7 +39,8 @@ class IOMonadTest extends TestCase
 
     public function testFailIsFailure(): void
     {
-        $m = IOMonad::fail(10);
+        $error = new \RuntimeException('error');
+        $m = IOMonad::fail($error);
 
         $this->assertTrue($m->isFailure());
     }
@@ -49,7 +50,7 @@ class IOMonadTest extends TestCase
         $m = IOMonad::fail(10);
 
         $result = $m->unwrapFailure($this->createClosureNotCalled());
-        $this->assertEquals(10, $result);
+        $this->assertSame(10, $result);
     }
 
     public function testFmapOnSuccess(): void
@@ -62,34 +63,47 @@ class IOMonadTest extends TestCase
 
     public function testFmapOnFailure(): void
     {
-        $m = IOMonad::fail(10);
-        $result = $m->fmap(fn ($x) => $x + 10);
+        $error = new \InvalidArgumentException('Failed');
+        $m = IOMonad::fail($error);
+        $fmapMockClosure = $this->createClosureNotCalled();
+        $result = $m->fmap($fmapMockClosure);
         $this->assertTrue($result->isFailure());
-        $this->assertEquals(10, $result->unwrapFailure($this->createClosureNotCalled()));
+
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     public function testFlatmapOnSuccess(): void
     {
         $m = IOMonad::pure(10);
-        $result = $m->flatMap(fn ($x) => IOMonad::pure($x + 10));
+        $result = $m->flatMap(fn (int $x) => IOMonad::pure($x + 10));
         $this->assertTrue($result->isSuccess());
         $this->assertEquals(20, $result->unwrapSuccess($this->createClosureNotCalled()));
     }
 
     public function testFlatmapOnFailure(): void
     {
-        $m = IOMonad::fail(10);
-        $result = $m->flatMap(fn ($x) => IOMonad::pure($x + 10));
+        $error = new \InvalidArgumentException('Failed');
+        $m = IOMonad::fail($error);
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):IOMonad<mixed,\Throwable> $flatmapFn
+         */
+        $flatmapFn = $this->createClosureNotCalled();
+        $result = $m->flatMap($flatmapFn);
         $this->assertTrue($result->isFailure());
-        $this->assertEquals(10, $result->unwrapFailure($this->createClosureNotCalled()));
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     public function testFlatmapOnSuccessWithFailure(): void
     {
+        $error = new \InvalidArgumentException('Failed');
         $m = IOMonad::pure(10);
-        $result = $m->flatMap(fn ($x) => IOMonad::fail(100));
+        $result = $m->flatMap(fn ($x) => IOMonad::fail($error));
+
         $this->assertTrue($result->isFailure());
-        $this->assertEquals(100, $result->unwrapFailure($this->createClosureNotCalled()));
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     public function testCanComplareIOMonads(): void

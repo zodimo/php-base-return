@@ -7,6 +7,7 @@ namespace Zodimo\BaseReturn\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use Zodimo\BaseReturn\Option;
 use Zodimo\BaseReturn\Result;
+use Zodimo\BaseReturnTest\MockClosureTrait;
 
 /**
  * @internal
@@ -15,6 +16,8 @@ use Zodimo\BaseReturn\Result;
  */
 class ResultTest extends TestCase
 {
+    use MockClosureTrait;
+
     /**
      * Constructors.
      */
@@ -26,7 +29,8 @@ class ResultTest extends TestCase
 
     public function testFail(): void
     {
-        $result = Result::fail(10);
+        $error = new \RuntimeException('error');
+        $result = Result::fail($error);
         $this->assertInstanceOf(Result::class, $result);
     }
 
@@ -37,6 +41,8 @@ class ResultTest extends TestCase
     {
         $result = Result::succeed(10);
         $this->assertTrue($result->isSuccess());
+        // confirming the seemingly obvious
+        // @phpstan-ignore method.impossibleType
         $this->assertFalse($result->isFailure());
     }
 
@@ -45,8 +51,11 @@ class ResultTest extends TestCase
      */
     public function testFailIsFailure(): void
     {
-        $result = Result::fail('error');
+        $error = new \RuntimeException('error');
+        $result = Result::fail($error);
         $this->assertTrue($result->isFailure());
+        // confirming the seemingly obvious
+        // @phpstan-ignore method.impossibleType
         $this->assertFalse($result->isSuccess());
     }
 
@@ -59,12 +68,13 @@ class ResultTest extends TestCase
         $option = $result->success();
         $this->assertInstanceOf(Option::class, $option);
         $this->assertTrue($option->isSome());
-        $this->assertEquals(10, $option->unwrap(fn () => 0));
+        $this->assertEquals(10, $option->unwrap($this->createClosureNotCalled()));
     }
 
     public function testFailSuccessOptionNone(): void
     {
-        $result = Result::fail('error');
+        $error = new \RuntimeException('error');
+        $result = Result::fail($error);
         $option = $result->success();
         $this->assertInstanceOf(Option::class, $option);
         $this->assertTrue($option->isNone());
@@ -75,11 +85,12 @@ class ResultTest extends TestCase
      */
     public function testFailFailureOptionSome(): void
     {
-        $result = Result::fail('fail');
+        $error = new \RuntimeException('error');
+        $result = Result::fail($error);
         $option = $result->failure();
         $this->assertInstanceOf(Option::class, $option);
         $this->assertTrue($option->isSome());
-        $this->assertEquals('fail', $option->unwrap(fn () => 'none'));
+        $this->assertEquals($error, $option->unwrap($this->createClosureNotCalled()));
     }
 
     public function testSucceedFailureOptionNone(): void
@@ -88,7 +99,6 @@ class ResultTest extends TestCase
         $option = $result->failure();
         $this->assertInstanceOf(Option::class, $option);
         $this->assertTrue($option->isNone());
-        $this->assertEquals('none', $option->unwrap(fn () => 'none'));
     }
 
     /**
@@ -102,7 +112,9 @@ class ResultTest extends TestCase
 
     public function testFailureUnwrapCallsOnFailureCallback(): void
     {
-        $result = Result::fail('error');
+        $error = new \RuntimeException('error');
+        $result = Result::fail($error);
+
         $this->assertEquals(10, $result->unwrap(fn ($_) => 10));
     }
 
@@ -111,14 +123,17 @@ class ResultTest extends TestCase
      */
     public function testFailureUnwrapFailureNotCallOnSuccessCallback(): void
     {
-        $result = Result::fail(10);
-        $this->assertEquals(10, $result->unwrapFailure(fn ($_) => 0));
+        $error = new \RuntimeException('error');
+        $result = Result::fail($error);
+
+        $this->assertEquals($error, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     public function testFailureUnwrapFailurCallsOnSuccessCallback(): void
     {
         $result = Result::succeed('success');
-        $this->assertEquals(10, $result->unwrapFailure(fn ($_) => 10));
+        $falseNegativeError = new \RuntimeException('false negative');
+        $this->assertSame($falseNegativeError, $result->unwrapFailure(fn ($_) => $falseNegativeError));
     }
 
     /**
@@ -135,11 +150,13 @@ class ResultTest extends TestCase
 
     public function testMatchOnFailure(): void
     {
-        $result = Result::fail(10)->match(
-            fn ($_) => 0,
-            fn ($e) => $e + 10
+        $error = new \RuntimeException('error');
+
+        $result = Result::fail($error)->match(
+            fn ($_) => 10,
+            fn ($e) => 0
         );
-        $this->assertEquals(20, $result);
+        $this->assertEquals(0, $result);
     }
 
     /**
@@ -148,7 +165,15 @@ class ResultTest extends TestCase
     public function testFromOpionSomeIsSuccess(): void
     {
         $option = Option::some(10);
-        $result = Result::fromOption($option, fn () => 'none');
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable():\Throwable
+         */
+        $mockClosureNotCalled = $this->createClosureNotCalled();
+
+        $result = Result::fromOption($option, $mockClosureNotCalled);
         $this->assertTrue($result->isSuccess());
         $this->assertEquals(10, $result->unwrap(fn ($_) => 0));
     }
@@ -156,9 +181,11 @@ class ResultTest extends TestCase
     public function testFromOptionNoneIsFailure(): void
     {
         $option = Option::none();
-        $result = Result::fromOption($option, fn () => 'none');
+        $error = new \RuntimeException('nothing');
+        $result = Result::fromOption($option, fn () => $error);
+
         $this->assertTrue($result->isFailure());
-        $this->assertEquals('none', $result->unwrapFailure(fn ($_) => 'success'));
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     /**
@@ -173,11 +200,12 @@ class ResultTest extends TestCase
 
     public function testMapOnFailure(): void
     {
-        $mapFn = fn (int $value) => $value + 10;
-        $result = Result::fail('fail')->map($mapFn);
+        $error = new \RuntimeException('error');
+        $mapFn = $this->createClosureNotCalled();
+        $result = Result::fail($error)->map($mapFn);
+
         $this->assertTrue($result->isFailure());
-        // unwrap and return the error for the test
-        $this->assertEquals('fail', $result->unwrap(fn ($error) => $error));
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     /**
@@ -185,16 +213,40 @@ class ResultTest extends TestCase
      */
     public function testMapFailureOnSuccess(): void
     {
-        $mapFn = fn ($_) => 'error';
-        $result = Result::succeed(11)->mapFailure($mapFn);
-        $this->assertEquals(11, $result->unwrap(fn ($_) => 'error'));
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):\Throwable
+         */
+        $mockClosureNotCalled = $this->createClosureNotCalled();
+
+        $result = Result::succeed(11)->mapFailure($mockClosureNotCalled);
+        $this->assertEquals(11, $result->unwrap($this->createClosureNotCalled()));
     }
 
     public function testMapFailureOnFailure(): void
     {
-        $mapFn = fn (int $e) => $e + 10;
-        $result = Result::fail(11)->mapFailure($mapFn);
-        $this->assertEquals(21, $result->unwrap(fn ($e) => $e));
+        $error1 = new \RuntimeException('error1');
+        $error2 = new \RuntimeException('error2');
+
+        $mockClosure = $this->createClosureMock();
+        $mockClosure->expects($this->once())->method('__invoke')->with($error1)->willReturn($error2);
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):\Throwable
+         */
+        $mockClosureNotCalled = $this->createClosureNotCalled();
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(\Throwable):\Throwable $mockClosure
+         */
+        $result = Result::fail($error1)->mapFailure($mockClosure);
+        $this->assertTrue($result->isFailure());
+        $this->assertEquals($error2, $result->unwrapFailure($mockClosureNotCalled));
     }
 
     /**
@@ -202,18 +254,38 @@ class ResultTest extends TestCase
      */
     public function testMapBothOnSuccess(): void
     {
-        $onSuccess = fn (int $n) => $n + 10;
-        $onFailure = fn ($_) => 'error';
-        $result = Result::succeed(11)->mapBoth($onSuccess, $onFailure);
-        $this->assertEquals(21, $result->unwrap(fn ($_) => 0));
+        $input = 10;
+        $output = 20;
+
+        $onSuccessMockClosure = $this->createClosureMock();
+        $onSuccessMockClosure->expects($this->once())->method('__invoke')->with($input)->willReturn($output);
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):\Throwable
+         */
+        $mockOnFailureClosureNotCalled = $this->createClosureNotCalled();
+
+        $result = Result::succeed($input)->mapBoth($onSuccessMockClosure, $mockOnFailureClosureNotCalled);
+        $this->assertEquals($output, $result->unwrap($this->createClosureNotCalled()));
     }
 
     public function testMapBothOnFailure(): void
     {
-        $onSuccess = fn ($_) => 'success';
-        $onFailure = fn (int $n) => $n + 10;
-        $result = Result::fail(11)->mapBoth($onSuccess, $onFailure);
-        $this->assertEquals(21, $result->unwrapFailure(fn ($_) => 0));
+        $inputError = new \RuntimeException('error1');
+        $outputError = new \RuntimeException('error2');
+
+        $onFailureMockClosure = $this->createClosureMock();
+        $onFailureMockClosure->expects($this->once())->method('__invoke')->with($inputError)->willReturn($outputError);
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(\Throwable):\Throwable $onFailureMockClosure
+         */
+        $result = Result::fail($inputError)->mapBoth($this->createClosureNotCalled(), $onFailureMockClosure);
+        $this->assertEquals($outputError, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     /**
@@ -223,20 +295,31 @@ class ResultTest extends TestCase
     {
         $flatmapFn = fn (int $n) => Result::succeed($n + 10);
         $result = Result::succeed(11)->flatMap($flatmapFn);
-        $this->assertEquals(21, $result->unwrap(fn ($_) => 'error'));
+        $this->assertEquals(21, $result->unwrap($this->createClosureNotCalled()));
     }
 
     public function testFlatmapOnFailure(): void
     {
-        $flatmapFn = fn (int $n) => Result::succeed($n + 10);
-        $result = Result::fail('fail')->flatMap($flatmapFn);
-        $this->assertEquals('fail', $result->unwrap(fn ($error) => $error));
+        $error = new \RuntimeException('error');
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):Result<mixed,\Throwable> $flatmapFn
+         */
+        $flatmapFn = $this->createClosureNotCalled();
+        $result = Result::fail($error)->flatMap($flatmapFn);
+        $this->assertTrue($result->isFailure());
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 
     public function testFlatmapReturnFailureOnSuccess(): void
     {
-        $flatmapFn = fn (int $n) => Result::fail('fail');
+        $error = new \RuntimeException('error');
+
+        $flatmapFn = fn (int $n) => Result::fail($error);
         $result = Result::succeed(11)->flatMap($flatmapFn);
-        $this->assertEquals('fail', $result->unwrap(fn ($error) => $error));
+        $this->assertTrue($result->isFailure());
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 }

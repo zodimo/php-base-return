@@ -32,9 +32,11 @@ class Result
     /**
      * Succeed with this $value as success.
      *
-     * @param T $value
+     * @template _T
      *
-     * @return Result<T, mixed>
+     * @param _T $value
+     *
+     * @return Result<_T,never>
      */
     public static function succeed($value): Result
     {
@@ -44,9 +46,11 @@ class Result
     /**
      * Fail with this $value as failure.
      *
-     * @param E $value
+     * @template _E
      *
-     * @return Result<mixed, E>
+     * @param _E $value
+     *
+     * @return Result<never,_E>
      */
     public static function fail($value): Result
     {
@@ -54,9 +58,9 @@ class Result
     }
 
     /**
-     * @phpstan-assert-if-true Result<T, mixed> $this
+     * @phpstan-assert-if-true Result<T,never> $this
      *
-     * @phpstan-assert-if-false Result<mixed, E> $this
+     * @phpstan-assert-if-false Result<never,E> $this
      */
     public function isSuccess(): bool
     {
@@ -64,9 +68,9 @@ class Result
     }
 
     /**
-     * @phpstan-assert-if-true Result<mixed, E> $this
+     * @phpstan-assert-if-true Result<never,E> $this
      *
-     * @phpstan-assert-if-false Result<T, mixed> $this
+     * @phpstan-assert-if-false Result<T,never> $this
      */
     public function isFailure(): bool
     {
@@ -76,7 +80,9 @@ class Result
     /**
      * Unwrap success value or call onFailure to return a default/alternative value.
      *
-     * @param callable(E):T $defaultOnFailure
+     * @template DefaultT of T
+     *
+     * @param callable(E):DefaultT $defaultOnFailure
      *
      * @return T
      */
@@ -92,7 +98,9 @@ class Result
     /**
      * Unwrap failure value or call onSuccess to return a default/alternative value.
      *
-     * @param callable(T):E $defaultOnSuccess
+     * @template WRAPPEDERR of E
+     *
+     * @param callable(T):WRAPPEDERR $defaultOnSuccess
      *
      * @return E
      */
@@ -106,7 +114,7 @@ class Result
     }
 
     /**
-     * @return Option<T>
+     * @return Option<T>|Option<void>
      */
     public function success(): Option
     {
@@ -118,7 +126,7 @@ class Result
     }
 
     /**
-     * @return Option<E>
+     * @return Option<E>|Option<void>
      */
     public function failure(): Option
     {
@@ -147,10 +155,15 @@ class Result
     }
 
     /**
-     * @param Option<T>    $option
-     * @param callable():E $onNone
+     * Option::none() represent a failure type.
      *
-     * @return Result<T,E>
+     * @template _T
+     * @template _E
+     *
+     * @param Option<_T>    $option
+     * @param callable():_E $onNone
+     *
+     * @return Result<_T,_E>
      */
     public static function fromOption(Option $option, callable $onNone): Result
     {
@@ -223,9 +236,9 @@ class Result
      * @template T2
      * @template E2
      *
-     * @param callable(T):Result<T2, E|E2> $fn
+     * @param callable(T):Result<T2, E2> $fn
      *
-     * @return Result<T2, E|E2>
+     * @return Result<never,E>|Result<T2,E2>
      */
     public function flatMap(callable $fn): Result
     {

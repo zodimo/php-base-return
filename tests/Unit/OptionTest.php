@@ -68,6 +68,7 @@ class OptionTest extends TestCase
         $option = Option::none();
         $onNone = $this->createClosureMock();
         $onNone->expects($this->once())->method('__invoke')->willReturn('none');
+        $this->assertTrue($option->isNone());
         $this->assertEquals('none', $option->unwrap($onNone));
     }
 
@@ -112,7 +113,7 @@ class OptionTest extends TestCase
 
     public function testMapOnNone(): void
     {
-        $result = Option::none()->map(fn (int $x) => $x + 10);
+        $result = Option::none()->map($this->createClosureNotCalled());
         $onNone = $this->createClosureMock();
         $onNone->expects($this->once())->method('__invoke')->willReturn('none');
 
@@ -138,6 +139,7 @@ class OptionTest extends TestCase
         $onNone->expects($this->once())->method('__invoke')->willReturn('none');
 
         $result = Option::some(10)->flatMap(fn ($_) => Option::none());
+        $this->assertTrue($result->isNone());
         $this->assertEquals('none', $result->unwrap($onNone));
     }
 

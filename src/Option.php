@@ -39,10 +39,14 @@ class Option
     }
 
     /**
-     * @return Option<mixed>
+     * Everything crashes when we use Option<never>.
+     *
+     * @return Option<void>
      */
     public static function none(): Option
     {
+        // void does not have a value,so null will have to do
+        // @phpstan-ignore return.type
         return new self(self::noneTag, null);
     }
 
@@ -69,7 +73,7 @@ class Option
     /**
      * Unwrap Some value or call onNone to return a default/alternative value.
      *
-     * @param callable():T $defaultOnNone
+     * @param callable(void):T $defaultOnNone
      *
      * @return T
      */
@@ -85,8 +89,8 @@ class Option
     /**
      * @template T2
      *
-     * @param callable(T):T2 $onSome
-     * @param callable():T2  $onNone
+     * @param callable(T):T2    $onSome
+     * @param callable(void):T2 $onNone
      *
      * @return T2
      */

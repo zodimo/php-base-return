@@ -39,6 +39,8 @@ class EitherTest extends TestCase
     {
         $either = Either::left(10);
         $this->assertTrue($either->isLeft());
+        // confirming the seemingly obvious
+        // @phpstan-ignore method.impossibleType
         $this->assertFalse($either->isRight());
     }
 
@@ -46,6 +48,8 @@ class EitherTest extends TestCase
     {
         $either = Either::right(10);
         $this->assertTrue($either->isRight());
+        // confirming the seemingly obvious
+        // @phpstan-ignore method.impossibleType
         $this->assertFalse($either->isLeft());
     }
 

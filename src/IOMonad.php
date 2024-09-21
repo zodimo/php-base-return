@@ -14,7 +14,7 @@ namespace Zodimo\BaseReturn;
 class IOMonad
 {
     /**
-     * @var Result<VALUE, ERR>
+     * @var Result<VALUE,ERR>
      */
     private Result $_result;
 
@@ -32,13 +32,12 @@ class IOMonad
      * @template _OUTPUTF
      * @template _ERRF
      *
-     * @param callable(VALUE):IOMonad<_OUTPUTF, _ERRF> $f
+     * @param callable(VALUE):IOMonad<_OUTPUTF,_ERRF> $f
      *
-     * @return IOMonad<_OUTPUTF, _ERRF|ERR>
+     * @return IOMonad<_OUTPUTF,_ERRF>|IOMonad<never,ERR>
      */
     public function flatMap(callable $f): IOMonad
     {
-        // @phpstan-ignore return.type
         return $this->_result->match(
             fn ($value) => call_user_func($f, $value),
             fn ($_) => $this
@@ -52,7 +51,7 @@ class IOMonad
      *
      * @param callable(VALUE):_OUTPUTF $f
      *
-     * @return IOMonad<_OUTPUTF, ERR>
+     * @return IOMonad<_OUTPUTF,ERR>
      */
     public function fmap(callable $f): IOMonad
     {
@@ -66,7 +65,7 @@ class IOMonad
      *
      * @param _VALUE $a
      *
-     * @return IOMonad<_VALUE, mixed>
+     * @return IOMonad<_VALUE,never>
      */
     public static function pure($a): IOMonad
     {
@@ -78,7 +77,7 @@ class IOMonad
      *
      * @param _ERR $e
      *
-     * @return IOMonad<mixed, _ERR>
+     * @return IOMonad<never,_ERR>
      */
     public static function fail($e): IOMonad
     {
@@ -86,22 +85,29 @@ class IOMonad
     }
 
     /**
-     * give access to the Result.
+     * @phpstan-assert-if-true IOMonad<VALUE, never> $this
+     *
+     * @phpstan-assert-if-false IOMonad<never, ERR> $this
      */
     public function isSuccess(): bool
     {
         return $this->_result->isSuccess();
     }
 
+    /**
+     * @phpstan-assert-if-true IOMonad<never, ERR> $this
+     *
+     * @phpstan-assert-if-false IOMonad<VALUE, never> $this
+     */
     public function isFailure(): bool
     {
         return $this->_result->isFailure();
     }
 
     /**
-     * For testing.
+     * @template WRAPPEDVALUE of VALUE
      *
-     * @param callable(ERR):VALUE $onFailure
+     * @param callable(ERR):WRAPPEDVALUE $onFailure
      *
      * @return VALUE
      */
@@ -111,9 +117,9 @@ class IOMonad
     }
 
     /**
-     *  For testing.
+     * @template WRAPPEDERR of ERR
      *
-     * @param callable(VALUE):ERR $onSuccess
+     * @param callable(VALUE):WRAPPEDERR $onSuccess
      *
      * @return ERR
      */
@@ -143,7 +149,7 @@ class IOMonad
      *
      * @param callable():_VALUE $f
      *
-     * @return IOMonad<_VALUE, \Throwable>
+     * @return IOMonad<_VALUE,\Throwable>
      */
     public static function try(callable $f): IOMonad
     {
