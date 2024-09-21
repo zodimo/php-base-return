@@ -39,7 +39,7 @@ class IOMonad
     public function flatMap(callable $f): IOMonad
     {
         return $this->_result->match(
-            fn ($value) => call_user_func($f, $value),
+            fn ($value) => $f($value),
             fn ($_) => $this
         );
     }
@@ -154,7 +154,7 @@ class IOMonad
     public static function try(callable $f): IOMonad
     {
         try {
-            return IOMonad::pure(call_user_func($f));
+            return IOMonad::pure($f());
         } catch (\Throwable $e) {
             return IOMonad::fail($e);
         }

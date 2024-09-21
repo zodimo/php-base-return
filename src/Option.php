@@ -71,7 +71,7 @@ class Option
     /**
      * Unwrap Some value or call onNone to return a default/alternative value.
      *
-     * @param callable(void):T $defaultOnNone
+     * @param callable():T $defaultOnNone
      *
      * @return T
      */
@@ -87,18 +87,18 @@ class Option
     /**
      * @template T2
      *
-     * @param callable(T):T2    $onSome
-     * @param callable(void):T2 $onNone
+     * @param callable(T):T2 $onSome
+     * @param callable():T2  $onNone
      *
      * @return T2
      */
     public function match(callable $onSome, callable $onNone)
     {
         if ($this->isSome()) {
-            return call_user_func($onSome, $this->value);
+            return $onSome($this->value);
         }
 
-        return call_user_func($onNone);
+        return $onNone();
     }
 
     /**
@@ -112,7 +112,7 @@ class Option
     {
         if ($this->isSome()) {
             $clone = clone $this;
-            $clone->value = call_user_func($fn, $this->value);
+            $clone->value = $fn($this->value);
 
             return $clone;
         }
@@ -130,7 +130,7 @@ class Option
     public function flatMap(callable $fn): Option
     {
         if ($this->isSome()) {
-            return call_user_func($fn, $this->value);
+            return $fn($this->value);
         }
 
         return $this;

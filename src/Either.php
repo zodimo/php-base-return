@@ -121,7 +121,7 @@ class Either
     public function matchLeft(callable $onLeft): Option
     {
         if ($this->isLeft()) {
-            return Option::some(call_user_func($onLeft, $this->value));
+            return Option::some($onLeft($this->value));
         }
 
         return Option::none();
@@ -137,7 +137,7 @@ class Either
     public function matchRight(callable $onRight): Option
     {
         if ($this->isRight()) {
-            return Option::some(call_user_func($onRight, $this->value));
+            return Option::some($onRight($this->value));
         }
 
         return Option::none();
@@ -154,10 +154,10 @@ class Either
     public function match(callable $onLeft, callable $onRight)
     {
         if ($this->isLeft()) {
-            return call_user_func($onLeft, $this->value);
+            return $onLeft($this->value);
         }
 
-        return call_user_func($onRight, $this->value);
+        return $onRight($this->value);
     }
 
     /**
@@ -171,7 +171,7 @@ class Either
     {
         if ($this->isLeft()) {
             $clone = clone $this;
-            $clone->value = call_user_func($fn, $this->value);
+            $clone->value = $fn($this->value);
 
             return $clone;
         }
@@ -190,7 +190,7 @@ class Either
     {
         if ($this->isRight()) {
             $clone = clone $this;
-            $clone->value = call_user_func($fn, $this->value);
+            $clone->value = $fn($this->value);
 
             return $clone;
         }
@@ -211,9 +211,9 @@ class Either
     {
         $clone = clone $this;
         if ($this->isLeft()) {
-            $clone->value = call_user_func($onLeft, $this->value);
+            $clone->value = $onLeft($this->value);
         } else {
-            $clone->value = call_user_func($onRight, $this->value);
+            $clone->value = $onRight($this->value);
         }
 
         return $clone;
@@ -232,7 +232,7 @@ class Either
     public function flatMap(callable $fn): Either
     {
         if ($this->isRight()) {
-            return call_user_func($fn, $this->value);
+            return $fn($this->value);
         }
 
         return $this;

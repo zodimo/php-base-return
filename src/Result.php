@@ -148,10 +148,10 @@ class Result
     public function match(callable $onSuccess, callable $onFailure)
     {
         if ($this->isSuccess()) {
-            return call_user_func($onSuccess, $this->value);
+            return $onSuccess($this->value);
         }
 
-        return call_user_func($onFailure, $this->value);
+        return $onFailure($this->value);
     }
 
     /**
@@ -169,7 +169,7 @@ class Result
     {
         return $option->match(
             fn ($some) => Result::succeed($some),
-            fn () => Result::fail(call_user_func($onNone)),
+            fn () => Result::fail($onNone()),
         );
     }
 
@@ -184,7 +184,7 @@ class Result
     {
         if ($this->isSuccess()) {
             $clone = clone $this;
-            $clone->value = call_user_func($fn, $this->value);
+            $clone->value = $fn($this->value);
 
             return $clone;
         }
@@ -203,7 +203,7 @@ class Result
     {
         if ($this->isFailure()) {
             $clone = clone $this;
-            $clone->value = call_user_func($fn, $this->value);
+            $clone->value = $fn($this->value);
 
             return $clone;
         }
@@ -224,9 +224,9 @@ class Result
     {
         $clone = clone $this;
         if ($this->isSuccess()) {
-            $clone->value = call_user_func($onSuccess, $this->value);
+            $clone->value = $onSuccess($this->value);
         } else {
-            $clone->value = call_user_func($onFailure, $this->value);
+            $clone->value = $onFailure($this->value);
         }
 
         return $clone;
@@ -243,7 +243,7 @@ class Result
     public function flatMap(callable $fn): Result
     {
         if ($this->isSuccess()) {
-            return call_user_func($fn, $this->value);
+            return $fn($this->value);
         }
 
         return $this;
