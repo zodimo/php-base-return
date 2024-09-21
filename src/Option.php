@@ -39,14 +39,12 @@ class Option
     }
 
     /**
-     * Everything crashes when we use Option<never>.
-     *
-     * @return Option<void>
+     * @return Option<mixed>
      */
     public static function none(): Option
     {
         // void does not have a value,so null will have to do
-        // @phpstan-ignore return.type
+
         return new self(self::noneTag, null);
     }
 

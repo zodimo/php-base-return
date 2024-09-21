@@ -114,7 +114,7 @@ class Result
     }
 
     /**
-     * @return Option<T>|Option<void>
+     * @return Option<T>
      */
     public function success(): Option
     {
@@ -126,7 +126,7 @@ class Result
     }
 
     /**
-     * @return Option<E>|Option<void>
+     * @return Option<E>
      */
     public function failure(): Option
     {

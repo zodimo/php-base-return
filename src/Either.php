@@ -116,7 +116,7 @@ class Either
      *
      * @param callable(LEFT):RETURN $onLeft
      *
-     * @return Option<RETURN>|Option<void>
+     * @return Option<RETURN>
      */
     public function matchLeft(callable $onLeft): Option
     {
@@ -132,7 +132,7 @@ class Either
      *
      * @param callable(RIGHT):RETURN $onRight
      *
-     * @return Option<RETURN>|Option<void>
+     * @return Option<RETURN>
      */
     public function matchRight(callable $onRight): Option
     {
