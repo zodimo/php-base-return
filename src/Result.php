@@ -36,7 +36,7 @@ class Result
      *
      * @param _T $value
      *
-     * @return Result<_T,never>
+     * @return Result<_T,mixed>
      */
     public static function succeed($value): Result
     {
@@ -50,7 +50,7 @@ class Result
      *
      * @param _E $value
      *
-     * @return Result<never,_E>
+     * @return Result<mixed,_E>
      */
     public static function fail($value): Result
     {

@@ -65,7 +65,7 @@ class IOMonad
      *
      * @param _VALUE $a
      *
-     * @return IOMonad<_VALUE,never>
+     * @return IOMonad<_VALUE,mixed>
      */
     public static function pure($a): IOMonad
     {
@@ -77,7 +77,7 @@ class IOMonad
      *
      * @param _ERR $e
      *
-     * @return IOMonad<never,_ERR>
+     * @return IOMonad<mixed,_ERR>
      */
     public static function fail($e): IOMonad
     {
