@@ -28,6 +28,7 @@ class IOMonad
 
     /**
      * Monadic bind >>=.
+     * Sequential computation on a successful value.
      *
      * @template _OUTPUTF
      * @template _ERRF
@@ -158,5 +159,57 @@ class IOMonad
         } catch (\Throwable $e) {
             return IOMonad::fail($e);
         }
+    }
+
+    // ///////////////////////
+    // / CONVENIENCE METHODS
+    // ///////////////////////
+
+    /**
+     * Like FlatMap but return ignores the result of the computation and propagate the failure.
+     *
+     * @template _ERRF
+     *
+     * @param callable(VALUE):IOMonad<mixed,_ERRF> $f
+     *
+     * @return IOMonad<never,_ERRF>|IOMonad<VALUE,ERR>
+     */
+    public function tapSuccess(callable $f): IOMonad
+    {
+        return $this->_result->match(
+            fn ($value) => $f($value)->flatMap(fn ($_) => $this),
+            fn ($_) => $this
+        );
+    }
+
+    /**
+     * Like tapSuccess but for failures.
+     *
+     * @template _ERRF
+     *
+     * @param callable(ERR):IOMonad<mixed,_ERRF> $f
+     *
+     * @return IOMonad<never,_ERRF>|IOMonad<VALUE,ERR>
+     */
+    public function tapFailure(callable $f): IOMonad
+    {
+        return $this->_result->match(
+            fn ($_) => $this,
+            fn ($failure) => $f($failure)->flatMap(fn ($_) => $this)
+        );
+    }
+
+    /**
+     * Like fmap, but on failure.
+     *
+     * @template _OUTPUTF
+     *
+     * @param callable(ERR):_OUTPUTF $f
+     *
+     * @return IOMonad<VALUE,_OUTPUTF>
+     */
+    public function fmapFailure(callable $f): IOMonad
+    {
+        return new IOMonad($this->_result->mapFailure($f));
     }
 }

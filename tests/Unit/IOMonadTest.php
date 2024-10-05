@@ -53,10 +53,18 @@ class IOMonadTest extends TestCase
         $this->assertSame(10, $result);
     }
 
+    // ///////////////
+    //  fmap
+    // //////////////
+
     public function testFmapOnSuccess(): void
     {
         $m = IOMonad::pure(10);
-        $result = $m->fmap(fn ($x) => $x + 10);
+
+        $fmapFn = $this->createClosureMock();
+        $fmapFn->expects($this->once())->method('__invoke')->with(10)->willReturn(20);
+
+        $result = $m->fmap($fmapFn);
         $this->assertTrue($result->isSuccess());
         $this->assertEquals(20, $result->unwrapSuccess($this->createClosureNotCalled()));
     }
@@ -75,7 +83,16 @@ class IOMonadTest extends TestCase
     public function testFlatmapOnSuccess(): void
     {
         $m = IOMonad::pure(10);
-        $result = $m->flatMap(fn (int $x) => IOMonad::pure($x + 10));
+
+        $flatmapFn = $this->createClosureMock();
+        $flatmapFn->expects($this->once())->method('__invoke')->with(10)->willReturn(IOMonad::pure(20));
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(int):IOMonad<int,mixed> $flatmapFn
+         */
+        $result = $m->flatMap($flatmapFn);
         $this->assertTrue($result->isSuccess());
         $this->assertEquals(20, $result->unwrapSuccess($this->createClosureNotCalled()));
     }
@@ -100,7 +117,16 @@ class IOMonadTest extends TestCase
     {
         $error = new \InvalidArgumentException('Failed');
         $m = IOMonad::pure(10);
-        $result = $m->flatMap(fn ($x) => IOMonad::fail($error));
+
+        $flatmapFn = $this->createClosureMock();
+        $flatmapFn->expects($this->once())->method('__invoke')->with(10)->willReturn(IOMonad::fail($error));
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):IOMonad<int,\Throwable> $flatmapFn
+         */
+        $result = $m->flatMap($flatmapFn);
 
         $this->assertTrue($result->isFailure());
         $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
@@ -143,5 +169,133 @@ class IOMonadTest extends TestCase
         $m = IOMonad::try($func);
 
         $this->assertSame($exception, $m->unwrapFailure($this->createClosureNotCalled()));
+    }
+
+    // ///////////////
+    //  tapSuccess.
+    // //////////////
+    public function testTapSuccessOnSuccessWithSuccess(): void
+    {
+        $m = IOMonad::pure(10);
+
+        $tapFn = $this->createClosureMock();
+        $tapFn->expects($this->once())->method('__invoke')->with(10)->willReturn(IOMonad::pure(null));
+
+        $result = $m->tapSuccess($tapFn);
+        $this->assertTrue($result->isSuccess());
+        $this->assertEquals(10, $result->unwrapSuccess($this->createClosureNotCalled()));
+    }
+
+    public function testTapSuccessOnSuccessWithFailure(): void
+    {
+        $error = new \InvalidArgumentException('Failed');
+        $m = IOMonad::pure(10);
+
+        $tapFn = $this->createClosureMock();
+        $tapFn->expects($this->once())->method('__invoke')->with(10)->willReturn(IOMonad::fail($error));
+
+        $result = $m->tapSuccess($tapFn);
+
+        $this->assertTrue($result->isFailure());
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
+    }
+
+    public function testTapSuccessOnFailure(): void
+    {
+        $error = new \InvalidArgumentException('Failed');
+        $m = IOMonad::fail($error);
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):IOMonad<mixed,\Throwable> $flatmapFn
+         */
+        $flatmapFn = $this->createClosureNotCalled();
+        $result = $m->tapSuccess($flatmapFn);
+        $this->assertTrue($result->isFailure());
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
+    }
+
+    // ///////////////
+    //  tapFailure.
+    // //////////////
+
+    public function testTapFailureOnFailuresWithSuccess(): void
+    {
+        $error = new \InvalidArgumentException('Failed');
+        $m = IOMonad::fail($error);
+        $tapFn = $this->createClosureMock();
+        $tapFn->expects($this->once())->method('__invoke')->with($error)->willReturn(IOMonad::pure(null));
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):IOMonad<mixed,\Throwable> $tapFn
+         */
+        $result = $m->tapFailure($tapFn);
+        $this->assertTrue($result->isFailure());
+        $this->assertSame($error, $result->unwrapFailure($this->createClosureNotCalled()));
+    }
+
+    public function testTapFailureOnFailuresWithFailure(): void
+    {
+        $error = new \InvalidArgumentException('Failed');
+        $tapError = new \RuntimeException('Failed');
+        $m = IOMonad::fail($error);
+
+        $tapFn = $this->createClosureMock();
+        $tapFn->expects($this->once())->method('__invoke')->with($error)->willReturn(IOMonad::fail($tapError));
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):IOMonad<mixed,\Throwable> $tapFn
+         */
+        $result = $m->tapFailure($tapFn);
+        $this->assertTrue($result->isFailure());
+        $this->assertSame($tapError, $result->unwrapFailure($this->createClosureNotCalled()));
+    }
+
+    public function testTapFailureOnSuccess(): void
+    {
+        $m = IOMonad::pure(10);
+
+        /**
+         * helping phpstan.
+         *
+         * @var callable(mixed):IOMonad<mixed,\Throwable> $flatmapFn
+         */
+        $flatmapFn = $this->createClosureNotCalled();
+        $result = $m->tapFailure($flatmapFn);
+        $this->assertTrue($result->isSuccess());
+        $this->assertEquals(10, $result->unwrapSuccess($this->createClosureNotCalled()));
+    }
+
+    // ///////////////
+    //  fmapFailure.
+    // //////////////
+
+    public function testFmapFailureOnSuccess(): void
+    {
+        $m = IOMonad::pure(10);
+        $fmapMockClosure = $this->createClosureNotCalled();
+        $result = $m->fmapFailure($fmapMockClosure);
+        $this->assertTrue($result->isSuccess());
+        $this->assertEquals(10, $result->unwrapSuccess($this->createClosureNotCalled()));
+    }
+
+    public function testFmapFailureOnFailure(): void
+    {
+        $error = new \InvalidArgumentException('Failed');
+        $error2 = new \RuntimeException('Failed');
+        $m = IOMonad::fail($error);
+
+        $fmapClosure = $this->createClosureMock();
+        $fmapClosure->expects($this->once())->method('__invoke')->with($error)->willReturn($error2);
+
+        $result = $m->fmapFailure($fmapClosure);
+        $this->assertTrue($result->isFailure());
+
+        $this->assertSame($error2, $result->unwrapFailure($this->createClosureNotCalled()));
     }
 }
