@@ -35,7 +35,7 @@ class IOMonad
      *
      * @param callable(VALUE):IOMonad<_OUTPUTF,_ERRF> $f
      *
-     * @return IOMonad<_OUTPUTF,_ERRF>|IOMonad<never,ERR>
+     * @return IOMonad<_OUTPUTF,_ERRF>|IOMonad<_OUTPUTF,ERR>
      */
     public function flatMap(callable $f): IOMonad
     {
@@ -172,7 +172,7 @@ class IOMonad
      *
      * @param callable(VALUE):IOMonad<mixed,_ERRF> $f
      *
-     * @return IOMonad<never,_ERRF>|IOMonad<VALUE,ERR>
+     * @return IOMonad<VALUE,_ERRF>|IOMonad<VALUE,ERR>
      */
     public function tapSuccess(callable $f): IOMonad
     {
@@ -189,7 +189,7 @@ class IOMonad
      *
      * @param callable(ERR):IOMonad<mixed,_ERRF> $f
      *
-     * @return IOMonad<never,_ERRF>|IOMonad<VALUE,ERR>
+     * @return IOMonad<VALUE,_ERRF>|IOMonad<VALUE,ERR>
      */
     public function tapFailure(callable $f): IOMonad
     {

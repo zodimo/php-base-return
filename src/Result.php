@@ -238,7 +238,7 @@ class Result
      *
      * @param callable(T):Result<T2, E2> $fn
      *
-     * @return Result<never,E>|Result<T2,E2>
+     * @return Result<T2,E2>|Result<T2,E>
      */
     public function flatMap(callable $fn): Result
     {

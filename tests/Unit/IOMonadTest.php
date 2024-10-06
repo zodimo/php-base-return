@@ -181,6 +181,11 @@ class IOMonadTest extends TestCase
         $tapFn = $this->createClosureMock();
         $tapFn->expects($this->once())->method('__invoke')->with(10)->willReturn(IOMonad::pure(null));
 
+        /**
+         * helping phpstan.
+         *
+         * @var callable(int):IOMonad<mixed,never> $tapFn
+         */
         $result = $m->tapSuccess($tapFn);
         $this->assertTrue($result->isSuccess());
         $this->assertEquals(10, $result->unwrapSuccess($this->createClosureNotCalled()));
@@ -194,6 +199,11 @@ class IOMonadTest extends TestCase
         $tapFn = $this->createClosureMock();
         $tapFn->expects($this->once())->method('__invoke')->with(10)->willReturn(IOMonad::fail($error));
 
+        /**
+         * helping phpstan.
+         *
+         * @var callable(int):IOMonad<mixed,\InvalidArgumentException> $tapFn
+         */
         $result = $m->tapSuccess($tapFn);
 
         $this->assertTrue($result->isFailure());
