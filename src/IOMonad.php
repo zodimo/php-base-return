@@ -212,4 +212,22 @@ class IOMonad
     {
         return new IOMonad($this->_result->mapFailure($f));
     }
+
+    /**
+     * Like flatMap, but on failure.
+     *
+     * @template _OUTPUTF
+     * @template _ERRF
+     *
+     * @param callable(ERR):IOMonad<_OUTPUTF,_ERRF> $f
+     *
+     * @return IOMonad<_OUTPUTF,_ERRF>|IOMonad<VALUE,ERR>
+     */
+    public function flatMapFailure(callable $f): IOMonad
+    {
+        return $this->_result->match(
+            fn ($_) => $this,
+            fn ($error) => $f($error),
+        );
+    }
 }
