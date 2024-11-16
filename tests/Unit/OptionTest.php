@@ -39,6 +39,7 @@ class OptionTest extends TestCase
     {
         $option = Option::some(10);
         $this->assertTrue($option->isSome());
+        // @phpstan-ignore method.impossibleType
         $this->assertFalse($option->isNone());
     }
 

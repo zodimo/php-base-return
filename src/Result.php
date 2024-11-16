@@ -118,11 +118,10 @@ class Result
      */
     public function success(): Option
     {
-        if ($this->isSuccess()) {
-            return Option::some($this->value);
-        }
-
-        return Option::none();
+        return $this->match(
+            fn ($value) => Option::some($value),
+            fn () => Option::none()
+        );
     }
 
     /**
@@ -130,11 +129,10 @@ class Result
      */
     public function failure(): Option
     {
-        if ($this->isFailure()) {
-            return Option::some($this->value);
-        }
-
-        return Option::none();
+        return $this->match(
+            fn () => Option::none(),
+            fn ($value) => Option::some($value),
+        );
     }
 
     /**

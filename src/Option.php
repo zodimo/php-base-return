@@ -29,9 +29,11 @@ class Option
     }
 
     /**
-     * @param T $value
+     * @template _T
      *
-     * @return Option<T>
+     * @param _T $value
+     *
+     * @return Option<_T>
      */
     public static function some($value): Option
     {
