@@ -20,7 +20,7 @@ class Option
     private $value;
 
     /**
-     * @param T $value
+     * @param mixed $value
      */
     private function __construct(string $_tag, $value)
     {
