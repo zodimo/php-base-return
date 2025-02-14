@@ -158,4 +158,29 @@ class OptionTest extends TestCase
         $result = Option::none()->flatMap($func);
         $this->assertEquals('none', $result->unwrap($onNone));
     }
+
+    public function testFmapOnSome(): void
+    {
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->never())->method('__invoke');
+
+        $result = Option::some(10)->fmap(fn (int $x) => $x + 10);
+
+        $this->assertEquals(20, $result->unwrap($onNone));
+    }
+
+    public function testFmapOnNone(): void
+    {
+        $func = $this->createClosureMock();
+        $func->expects($this->never())->method('__invoke');
+
+        $onNone = $this->createClosureMock();
+        $onNone->expects($this->once())->method('__invoke')->willReturn('none');
+
+        /**
+         * @var callable(mixed):Option<mixed> $func
+         */
+        $result = Option::none()->fmap($func);
+        $this->assertEquals('none', $result->unwrap($onNone));
+    }
 }

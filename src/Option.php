@@ -137,4 +137,20 @@ class Option
 
         return $this;
     }
+
+    /**
+     * @template T2
+     *
+     * @param callable(T):T2 $fn
+     *
+     * @return Option<T2>
+     */
+    public function fmap(callable $fn): Option
+    {
+        if ($this->isSome()) {
+            return Option::some($fn($this->value));
+        }
+
+        return $this;
+    }
 }
